@@ -98,7 +98,7 @@ if __name__ == '__main__':
         print('\nBest performing strategy per regime:')
         for _, row in perf.iterrows():
             state = row['State']
-            sharpes = {k.replace('_Sharpe', ''): v for k, v in row.items() if '_Sharpe' in k} # and 'Market' not in k
+            sharpes = {k.replace('_Sharpe', ''): v for k, v in row.items() if '_Sharpe' in k and 'Market' not in k and 'RF' not in k}
             best_strat = max(sharpes, key = sharpes.get)
             print(f'State {state} ({state_means[state]*100:.4f}% daily avg): Best = {best_strat} (Sharpe: {sharpes[best_strat]:.2f})')
     else:
