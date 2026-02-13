@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
         means, covars = hmm_model.state_stats()
 
-        print('\nState Means (Daily Return and Volatility):')
+        print('\nState Means (Daily Return and Volatility), as number of standard deviations from the average:')
         for i,mean in enumerate(means):
             print(f'State: {i}: {mean}')
         
