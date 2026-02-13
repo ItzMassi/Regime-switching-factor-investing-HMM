@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 class HMM:
-    def __init__(self, n_components = 3, covariance_type = 'full', n_iter = 75, random_state = 42):
+    def __init__(self, n_components = 2, covariance_type = 'full', n_iter = 75, random_state = 42):
         self.model = GaussianHMM(n_components = n_components,
                                  covariance_type = covariance_type,
                                  n_iter = n_iter,
@@ -21,7 +21,8 @@ class HMM:
     
     def state_stats(self):
         return self.model.means_, self.model.covars_
-    
+
+
 if __name__ == '__main__':
     df = fetch_data(start = '2007-01-01', end = '2025-12-31')
     df = calculate_features(df).dropna()
