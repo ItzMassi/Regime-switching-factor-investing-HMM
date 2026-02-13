@@ -60,7 +60,7 @@ def analyze_performance(hmm_states, factor_data):
     for state  in unique_states:
         state_data = strategies[strategies['State'] == state]
         row = {'State': state, 'Count': len(state_data)}
-        for strategy in ['Fama-French3', 'Carhart', 'Value', 'AQR','Market']:
+        for strategy in ['Fama-French3', 'Carhart', 'Value', 'AQR','Market','RF']:
             ret = state_data[strategy]
             avg_ret = ret.mean() * 252
             sharpe = ((ret - rf).mean() / ret.std()) * np.sqrt(252) if ret.std() > 0 else 0
@@ -92,9 +92,9 @@ if __name__ == '__main__':
     if not ff_data.empty:
         perf = analyze_performance(train_df['HMM_state'], ff_data)
         print('\nSharpe Ratio per regime:')
-        print(perf.set_index('State')[['Fama-French3_Sharpe','Carhart_Sharpe','Value_Sharpe','AQR_Sharpe', 'Market_Sharpe']])
+        print(perf.set_index('State')[['Fama-French3_Sharpe','Carhart_Sharpe','Value_Sharpe','AQR_Sharpe', 'Market_Sharpe', 'RF_Sharpe']])
         print('\nAnnualized Return per regime:')
-        print(perf.set_index('State')[['Fama-French3_Return', 'Carhart_Return', 'Value_Return', 'AQR_Return', 'Market_Return']])
+        print(perf.set_index('State')[['Fama-French3_Return', 'Carhart_Return', 'Value_Return', 'AQR_Return', 'Market_Return', 'RF_Return']])
         print('\nBest performing strategy per regime:')
         for _, row in perf.iterrows():
             state = row['State']
