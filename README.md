@@ -7,13 +7,13 @@ A quantitative investment strategy that uses Hidden Markov Models (HMM) to detec
 Financial markets exhibit different behavioral patterns—bull markets characterized by steady growth and low volatility, and bear markets marked by heightened uncertainty and negative returns. This project leverages unsupervised machine learning (HMM) to identify these latent market states and adapts the investment strategy accordingly:
 
 - **Bull Regime** → AQR-style multi-factor strategy (Value, Momentum, Quality, Investment)
-- **Bear Regime** → Defensive Fama-French 3-factor strategy (Market, Size, Value)
+- **Bear Regime** → Cash (risk-free rate)
 
 ## Key Features
 
 - **Regime Detection**: 2-state Gaussian HMM trained on daily returns and rolling volatility
 - **Rolling Window Training**: 10.7-year (~2,707 trading days) rolling window for adaptive model updates
-- **Confidence Filtering**: PDF-based confidence thresholds prevent spurious regime switches
+- **Confidence Filtering**: State probability threshold (>80%) prevents spurious regime switches
 - **Factor Strategies**: Multiple academic factor models (FF3, Carhart, AQR, Value)
 - **Backtesting Framework**: Full out-of-sample backtesting with performance metrics
 
@@ -29,12 +29,10 @@ The trained HMM classifies each trading day into one of two states:
 | State | Characteristics | Strategy |
 |-------|----------------|----------|
 | Bull | Higher mean returns, lower volatility | AQR Multi-Factor |
-| Bear | Lower/negative returns, higher volatility | Fama-French 3-Factor |
+| Bear | Lower/negative returns, higher volatility | Cash |
 
 ### 3. Confidence Thresholds
-To avoid overtrading during uncertain periods, strategy switches only occur when:
-- Return PDF likelihood > 0.5
-- Volatility PDF likelihood > 0.3
+To avoid overtrading during uncertain periods, strategy switches only occur when the HMM's `predict_proba` returns a state probability greater than 80%. This ensures high-confidence regime classification before triggering any strategy change.
 
 ## Project Structure
 
@@ -44,7 +42,7 @@ To avoid overtrading during uncertain periods, strategy switches only occur when
 ├── factor_analysis.py   # Factor strategy analysis per regime
 ├── hmm_model.py         # HMM wrapper class
 ├── data_fetcher.py      # Data retrieval and feature calculation
-└── CLAUDE.md            # Development guidelines
+
 ```
 
 ### Module Descriptions

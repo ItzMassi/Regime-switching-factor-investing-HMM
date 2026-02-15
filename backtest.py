@@ -7,6 +7,8 @@ import scipy.stats as stats
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
+import warnings
+warnings.filterwarnings('ignore')
 
 def get_state_map(hmm, X_train):
     states = hmm.predict(X_train)
@@ -40,8 +42,8 @@ def calculate_pdf_confidence(hmm, state, obs):
     return pdf_ret, pdf_vol
 
 def run_backtest(start_date = '2018-01-01', window_size = 2707):
-    full_start_date = pd.to_datetime(start_date) - pd.Timedelta(days=window_size * 2) # Buffer
-    df = fetch_data(start=full_start_date.strftime('%Y-%m-%d'))
+    full_start_date = pd.to_datetime(start_date) - pd.Timedelta(days=window_size * 3) # Buffer
+    df = fetch_data(start=full_start_date.strftime('%Y-%m-%d')) 
     df = calculate_features(df).dropna()
 
     ff_data = load_ff(start_date = '2007-01-01', end_date = '2023-12-31')
@@ -57,44 +59,66 @@ def run_backtest(start_date = '2018-01-01', window_size = 2707):
     print(f'Starting backtest from {start_date} ({len(test_dates)} trading days...)')
 
     # Init portfolio
-    current_strategy = 'RF'
+    current_strategy = 'Market'
     portfolio_value = 100.0
     values = []
     decisions = []
 
     strat_map = {
         'Bull': 'AQR',
-        'Bear': 'Fama-French3'
+        'Bear': 'Cash'
     }
 
     t_start = df.index.get_loc(test_dates[0])
+    
+    # Debug counters
+    switch_counts = {'Bull': 0, 'Bear': 0}
+    confident_counts = 0
+    total_rebalances = 0
+
+    # Initial state
+    current_state_idx = 0 
+    predicted_regime = 'Bull' # Default to Bull
+    confident = False
 
     for t in tqdm(range(t_start, len(df))):
         date = df.index[t]
+        
+        # Weekly Rebalancing (Monday = 0)
+        is_monday = date.weekday() == 0
+        is_first_day = (t == t_start)
 
-        train_start = t - window_size
-        train_data = df.iloc[train_start:t]
-        X_train = train_data[['Daily_return', 'MSE_Vol']].values
-        scaler = StandardScaler()
-        X_train = scaler.fit_transform(X_train)
+        if is_monday or is_first_day:
+            total_rebalances += 1
+            
+            train_start = t - window_size
+            train_data = df.iloc[train_start:t]
+            X_train = train_data[['Daily_return', 'MSE_Vol']].values
+            scaler = StandardScaler()
+            X_train = scaler.fit_transform(X_train)
 
-        hmm = HMM(n_components = 2, n_iter = 75, random_state = 42)
-        hmm.model.fit(X_train)
+            hmm = HMM(n_components = 2, n_iter = 75, random_state = 42)
+            hmm.model.fit(X_train)
 
-        state_labels = get_state_map(hmm, X_train)
+            state_labels = get_state_map(hmm, X_train)
 
-        last_obs = X_train[-1].reshape(1,-1)
-        current_state_idx = hmm.model.predict(last_obs)[0]
-        predicted_regime = state_labels[current_state_idx]
+            last_obs = X_train[-1].reshape(1,-1)
+            current_state_idx = hmm.model.predict(last_obs)[0]
+            predicted_regime = state_labels[current_state_idx]
 
-        pdf_ret, pdf_vol = calculate_pdf_confidence(hmm, current_state_idx, last_obs[0])
+            state_probs = hmm.model.predict_proba(last_obs)[0]
+            current_state_prob = state_probs[current_state_idx]
 
-        confident = (pdf_ret > 0.5) and (pdf_vol > 0.3)
+            # Confidence threshold 
+            confident = current_state_prob > 0.80
+            
+            if confident:
+                confident_counts += 1
+                target_strategy = strat_map[predicted_regime]
+                if target_strategy != current_strategy:
+                    current_strategy = target_strategy
+                    switch_counts[predicted_regime] += 1
 
-        if confident:
-            target_strategy = strat_map[predicted_regime]
-            if target_strategy != current_strategy:
-                current_strategy = target_strategy
         else: 
             pass 
 
@@ -159,6 +183,12 @@ def run_backtest(start_date = '2018-01-01', window_size = 2707):
     print(f'Strategy Sharpe Ratio: {strat_sharpe:.2f}')
     print(f'SPY Sharpe Ratio: {spy_sharpe:.2f}')
     print(f'Final Portfolio Value: {strat_end_value:.2f}')
+    print(f'\n---Debug Info---')
+    print(f'Total Rebalance Events: {total_rebalances}')
+    print(f'Confident Predictions: {confident_counts} ({confident_counts/total_rebalances:.1%})')
+    print(f'Switches to Bull: {switch_counts["Bull"]}')
+    print(f'Switches to Bear: {switch_counts["Bear"]}')
+
 
     # Visualisation
     plt.figure(figsize=(12, 6))
