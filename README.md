@@ -126,7 +126,7 @@ Trains the HMM and displays state statistics (means, covariances, state distribu
 - Fama, E. F., & French, K. R. (1993). Common risk factors in the returns on stocks and bonds.
 - Carhart, M. M. (1997). On persistence in mutual fund performance.
 - Rabiner, L. R. (1989). A tutorial on hidden Markov models and selected applications in speech recognition.
-- Wang, Lin, Mikhelson (2020). Regime-Switching Factor Investing with Hidden Markov Models
+- Wang, Lin, Mikhelson (2020). Regime-Switching Factor Investing with Hidden Markov Models.
 
 
 ## License
