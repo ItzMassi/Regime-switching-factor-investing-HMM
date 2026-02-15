@@ -42,7 +42,7 @@ To avoid overtrading during uncertain periods, strategy switches only occur when
 ├── factor_analysis.py   # Factor strategy analysis per regime
 ├── hmm_model.py         # HMM wrapper class
 ├── data_fetcher.py      # Data retrieval and feature calculation
-└── CLAUDE.md            # Development guidelines
+
 ```
 
 ### Module Descriptions
